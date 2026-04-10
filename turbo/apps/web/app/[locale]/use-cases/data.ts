@@ -10,6 +10,8 @@ export interface ConnectorRef {
   label: string;
   icon: string;
   darkIcon?: string;
+  /** true when the icon SVG is dark-coloured and needs inversion in dark mode */
+  dark?: boolean;
 }
 
 export interface SlackMessage {
@@ -89,12 +91,14 @@ const SENTRY: ConnectorRef = {
   id: "sentry",
   label: "Sentry",
   icon: "/assets/connectors/sentry.svg",
+  dark: true,
 };
 
 const GITHUB: ConnectorRef = {
   id: "github",
   label: "GitHub",
   icon: "/assets/connectors/github.svg",
+  dark: true,
 };
 
 const GMAIL: ConnectorRef = {
@@ -113,30 +117,35 @@ const LINEAR: ConnectorRef = {
   id: "linear",
   label: "Linear",
   icon: "/assets/connectors/linear.svg",
+  dark: true,
 };
 
 const X_TWITTER: ConnectorRef = {
   id: "x",
   label: "X (Twitter)",
   icon: "/assets/connectors/x.svg",
+  dark: true,
 };
 
 const NOTION: ConnectorRef = {
   id: "notion",
   label: "Notion",
   icon: "/assets/connectors/notion.svg",
+  dark: true,
 };
 
 const INTERCOM: ConnectorRef = {
   id: "intercom",
   label: "Intercom",
   icon: "/assets/connectors/intercom.svg",
+  dark: true,
 };
 
 const AXIOM: ConnectorRef = {
   id: "axiom",
   label: "Axiom",
   icon: "/assets/connectors/axiom.svg",
+  dark: true,
 };
 
 const GOOGLE_SHEETS: ConnectorRef = {
@@ -155,6 +164,7 @@ const VERCEL: ConnectorRef = {
   id: "vercel",
   label: "Vercel",
   icon: "/assets/connectors/vercel.svg",
+  dark: true,
 };
 
 const FIGMA: ConnectorRef = {
