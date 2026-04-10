@@ -117,7 +117,6 @@ const LINEAR: ConnectorRef = {
   id: "linear",
   label: "Linear",
   icon: "/assets/connectors/linear.svg",
-  dark: true,
 };
 
 const X_TWITTER: ConnectorRef = {
