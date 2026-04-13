@@ -90,6 +90,10 @@ describe("voiceBanner — preparing state (MC-VC-003)", () => {
         await hangDeferred.promise;
         return HttpResponse.json({ events: [] });
       }),
+      // Heartbeat fires concurrently with the context poll during preparation
+      http.post("*/api/zero/voice-chat/*/heartbeat", () => {
+        return HttpResponse.json({ ok: true });
+      }),
     );
 
     const user = userEvent.setup();
