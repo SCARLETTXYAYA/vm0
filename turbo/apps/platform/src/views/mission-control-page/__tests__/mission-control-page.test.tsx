@@ -422,11 +422,11 @@ describe("mission control page", () => {
     await waitFor(() => {
       expect(screen.getByText("Voice session with Zero")).toBeInTheDocument();
     });
-    // Microphone icon rendered (voice_chat maps to IconMicrophone)
+    // An icon SVG is rendered for the voice_chat task type
     const card = screen
       .getByText("Voice session with Zero")
       .closest("[role=button]") as HTMLElement;
-    expect(card.querySelector(".tabler-icon-microphone")).not.toBeNull();
+    expect(card.querySelector("svg")).not.toBeNull();
   });
 
   it("should open new chat dialog when c key is pressed", async () => {

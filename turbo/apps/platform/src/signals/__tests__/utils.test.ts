@@ -5,6 +5,8 @@ import {
   resetSignal,
   createDeferredPromise,
   geometryStyle,
+  setLoop,
+  clearAllDetached,
 } from "../utils.ts";
 import { createStore } from "ccstate";
 
@@ -95,6 +97,37 @@ describe("utils", () => {
       controller.abort(new Error("too late"));
 
       await expect(defer.promise).resolves.toBe(100);
+    });
+  });
+
+  describe("setLoop", () => {
+    it("resolves cleanly when aborted — no unhandled rejection from window.setTimeout path", async () => {
+      const controller = new AbortController();
+      let iterations = 0;
+
+      const loopPromise = setLoop(
+        async (_signal) => {
+          iterations++;
+          return false; // keep looping
+        },
+        1000,
+        controller.signal,
+      );
+
+      // Let at least one iteration run
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 0);
+      });
+
+      // Abort while the loop is waiting between iterations
+      controller.abort(Object.assign(new Error("AbortError"), { name: "AbortError" }));
+
+      // setLoop should resolve (not reject) on abort
+      await expect(loopPromise).resolves.toBeUndefined();
+      expect(iterations).toBeGreaterThanOrEqual(1);
+
+      // clearAllDetached must drain without throwing — verifies no orphaned promise
+      await expect(clearAllDetached()).resolves.not.toThrow();
     });
   });
 
