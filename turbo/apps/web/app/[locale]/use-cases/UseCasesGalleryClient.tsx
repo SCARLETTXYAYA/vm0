@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { Link } from "../../../navigation";
 import Footer from "../../components/Footer";
 import Particles from "../../components/Particles";
-import { USE_CASES } from "./data";
+import { getAppUrl } from "../../../src/lib/zero/url";
+import { USE_CASES, buildTryItHref } from "./data";
 import type { UseCase, ConnectorRef, AvatarConfig } from "./data";
 
 const AVATAR_BASE = "/assets/avatar";
@@ -58,53 +59,82 @@ function ConnectorIcon({ connector }: { connector: ConnectorRef }) {
   );
 }
 
-function UseCaseCard({ useCase }: { useCase: UseCase }) {
+function UseCaseCard({
+  useCase,
+  platformUrl,
+}: {
+  useCase: UseCase;
+  platformUrl: string;
+}) {
+  const t = useTranslations("useCases");
   return (
-    <Link
-      href={`/use-cases/${useCase.slug}`}
-      className="group block overflow-hidden rounded-[20px] bg-white transition-all duration-300 hover:-translate-y-0.5"
-      style={{ textDecoration: "none" }}
-    >
-      {/* Colorful top area */}
-      <div
-        className="relative flex items-center justify-between px-6 pb-6 pt-16"
-        style={{ backgroundColor: useCase.color }}
-      >
-        {/* Grid texture overlay */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-        {/* Agent avatar */}
-        <AgentAvatar config={useCase.avatar} size={64} />
+    <article className="group relative block overflow-hidden rounded-[20px] bg-white transition-all duration-300 hover:-translate-y-0.5">
+      {/* Full-card navigation link, sits behind all content via z-0 */}
+      <Link
+        href={`/use-cases/${useCase.slug}`}
+        aria-label={useCase.title}
+        className="absolute inset-0 z-0 rounded-[20px]"
+        style={{ textDecoration: "none" }}
+      />
 
-        {/* Connector logos */}
-        <div className="relative flex items-center gap-1.5" style={{ top: 10 }}>
-          {useCase.connectors.map((c) => {
-            return <ConnectorIcon key={c.id} connector={c} />;
-          })}
+      {/* Content wrapper — pointer-events-none so clicks pass through to the overlay Link */}
+      <div className="pointer-events-none relative z-[1]">
+        {/* Colorful top area */}
+        <div
+          className="relative flex items-center justify-between px-6 pb-6 pt-16"
+          style={{ backgroundColor: useCase.color }}
+        >
+          {/* Grid texture overlay */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+            }}
+          />
+          {/* Agent avatar */}
+          <AgentAvatar config={useCase.avatar} size={64} />
+
+          {/* Connector logos */}
+          <div
+            className="relative flex items-center gap-1.5"
+            style={{ top: 10 }}
+          >
+            {useCase.connectors.map((c) => {
+              return <ConnectorIcon key={c.id} connector={c} />;
+            })}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-col gap-3 px-6 pb-7 pt-5">
+          <h3 className="text-lg font-medium leading-snug tracking-[-0.2px] text-[hsl(var(--foreground))] group-hover:text-[#ed4e01]">
+            {useCase.title}
+          </h3>
+          <p className="line-clamp-3 text-[15px] font-light leading-relaxed text-[hsl(var(--muted-foreground))]">
+            {useCase.description}
+          </p>
+
+          {/* Hover/focus-visible CTA to the platform. Pointer-events opt-in above the overlay link. */}
+          {/* TODO(analytics): emit try-it-click event with useCase.slug */}
+          <a
+            href={buildTryItHref(useCase, platformUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="uc-try-it-cta pointer-events-auto relative z-[2] mt-1 inline-flex w-fit items-center gap-1 rounded-lg border border-[hsl(var(--gray-300))] bg-white px-3 py-1.5 text-[13px] font-medium text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--gray-50))]"
+          >
+            {t("tryItButton")}
+          </a>
         </div>
       </div>
-
-      {/* Content */}
-      <div className="flex flex-col gap-3 px-6 pb-7 pt-5">
-        <h3 className="text-lg font-medium leading-snug tracking-[-0.2px] text-[hsl(var(--foreground))] group-hover:text-[#ed4e01]">
-          {useCase.title}
-        </h3>
-        <p className="line-clamp-3 text-[15px] font-light leading-relaxed text-[hsl(var(--muted-foreground))]">
-          {useCase.description}
-        </p>
-      </div>
-    </Link>
+    </article>
   );
 }
 
 export default function UseCasesGalleryClient() {
   const t = useTranslations("useCases");
+  const platformUrl = getAppUrl();
 
   return (
     <div className="landing-page min-h-screen bg-[hsl(var(--gray-0))] text-[hsl(var(--foreground))]">
@@ -122,7 +152,13 @@ export default function UseCasesGalleryClient() {
       <section style={{ paddingBottom: "120px" }}>
         <div className="uc-grid">
           {USE_CASES.map((uc) => {
-            return <UseCaseCard key={uc.slug} useCase={uc} />;
+            return (
+              <UseCaseCard
+                key={uc.slug}
+                useCase={uc}
+                platformUrl={platformUrl}
+              />
+            );
           })}
 
           {/* Coming soon */}
