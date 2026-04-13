@@ -607,6 +607,20 @@ export async function setTestRunSelectedModel(
 }
 
 /**
+ * Set the summary field on a zero_runs record.
+ * Used to simulate an AI-generated summary being written back to the DB.
+ */
+export async function setTestRunSummary(
+  runId: string,
+  summary: string,
+): Promise<void> {
+  await globalThis.services.db
+    .update(zeroRuns)
+    .set({ summary })
+    .where(eq(zeroRuns.id, runId));
+}
+
+/**
  * Find agent runs matching a given userId and prompt.
  */
 export async function findTestRunsByUserAndPrompt(

@@ -15,6 +15,7 @@ import {
   insertTestSlackOrgThreadSession,
   createTestEmailThreadSession,
   generateTestReplyToken,
+  setTestRunSummary,
 } from "../../../../../src/__tests__/api-test-helpers";
 import {
   testContext,
@@ -312,5 +313,86 @@ describe("GET /api/zero/tasks", () => {
     expect(data.tasks[0].title).toBe("Thread 29");
     // Least recent in the 25 should be Thread 5
     expect(data.tasks[24].title).toBe("Thread 5");
+  });
+
+  it("should use prompt as summary fallback when run summary is null", async () => {
+    const { composeId } = await createTestCompose(uniqueId("fallback-test"));
+    const threadId = await insertTestChatThread(
+      user.userId,
+      composeId,
+      "Fallback Thread",
+    );
+
+    const { runId } = await createTestRunInDb(user.userId, composeId, {
+      status: "completed",
+      prompt: "short prompt",
+    });
+    await addTestRunToThread(threadId, runId, user.userId);
+    // zeroRuns.summary is null by default — no explicit update needed
+
+    const request = createTestRequest("http://localhost:3000/api/zero/tasks");
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    const task = data.tasks.find((t: Record<string, unknown>) => {
+      return t.title === "Fallback Thread";
+    });
+    expect(task).toBeDefined();
+    expect(task.summary).toBe("short prompt");
+  });
+
+  it("should truncate long prompt fallback to 100 chars with ellipsis", async () => {
+    const { composeId } = await createTestCompose(uniqueId("truncate-test"));
+    const threadId = await insertTestChatThread(
+      user.userId,
+      composeId,
+      "Truncate Thread",
+    );
+
+    const longPrompt = "a".repeat(120);
+    const { runId } = await createTestRunInDb(user.userId, composeId, {
+      status: "completed",
+      prompt: longPrompt,
+    });
+    await addTestRunToThread(threadId, runId, user.userId);
+
+    const request = createTestRequest("http://localhost:3000/api/zero/tasks");
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    const task = data.tasks.find((t: Record<string, unknown>) => {
+      return t.title === "Truncate Thread";
+    });
+    expect(task).toBeDefined();
+    expect(task.summary).toBe("a".repeat(100) + "…");
+  });
+
+  it("should use run summary when present and not fall back to prompt", async () => {
+    const { composeId } = await createTestCompose(uniqueId("summary-test"));
+    const threadId = await insertTestChatThread(
+      user.userId,
+      composeId,
+      "Summary Thread",
+    );
+
+    const { runId } = await createTestRunInDb(user.userId, composeId, {
+      status: "completed",
+      prompt: "original prompt that should not appear",
+    });
+    await addTestRunToThread(threadId, runId, user.userId);
+    await setTestRunSummary(runId, "AI-generated summary");
+
+    const request = createTestRequest("http://localhost:3000/api/zero/tasks");
+    const response = await GET(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    const task = data.tasks.find((t: Record<string, unknown>) => {
+      return t.title === "Summary Thread";
+    });
+    expect(task).toBeDefined();
+    expect(task.summary).toBe("AI-generated summary");
   });
 });
