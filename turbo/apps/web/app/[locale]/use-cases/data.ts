@@ -221,6 +221,8 @@ export const USE_CASES: UseCase[] = [
           "@Zero every weekday at 9am, run this same Sentry check and post results to #dev. Only include errors with 5+ occurrences.",
       },
     ],
+    ctaPrompt:
+      "Show me the top Sentry errors from the last 24 hours, ranked by frequency, with detailed stack traces for the top 3.",
     steps: [
       {
         title: "Zero connects to Sentry",
@@ -470,6 +472,8 @@ export const USE_CASES: UseCase[] = [
           '@Zero for each handle in my Notion KOL list marked as "Not contacted", research their X profile and draft a personalized outreach email. Save all as Gmail drafts.',
       },
     ],
+    ctaPrompt:
+      "Read @swyx's recent X posts and draft a personalized cold email about a VM0 partnership. Save as a Gmail draft.",
     steps: [
       {
         title: "Zero reads the KOL's X profile",
@@ -703,6 +707,8 @@ export const USE_CASES: UseCase[] = [
           "@Zero every morning at 9am and after lunch at 1pm, scan my unreads and DM me what needs action.",
       },
     ],
+    ctaPrompt:
+      "Scan my unread Slack messages, filter out noise, and show what needs my attention today, sorted by urgency.",
     steps: [
       {
         title: "Zero scans your channels",
@@ -821,6 +827,8 @@ export const USE_CASES: UseCase[] = [
           '@Zero when someone posts in #new-hires with format "Name / Role / Start Date", auto-run the full onboarding workflow.',
       },
     ],
+    ctaPrompt:
+      "Onboard a new teammate: duplicate the Notion template, schedule week-1 intros, post a welcome to #general, and send a first-week agenda.",
     steps: [
       {
         title: "Notion onboarding page created",
@@ -1012,4 +1020,26 @@ export function getUseCaseBySlug(slug: string): UseCase | undefined {
   return USE_CASES.find((uc) => {
     return uc.slug === slug;
   });
+}
+
+/**
+ * Build the platform deep-link for a use case's "Try it" CTA.
+ * Shape: `{platformUrl}/?prompt=...&connector=id1,id2`.
+ *
+ * - Uses `ctaPrompt` when set, otherwise the first `promptVariants` entry.
+ * - `connector` param becomes a no-op on the platform until #9128/#9129 land,
+ *   but extra query params are forward-compatible (ignored by current router).
+ */
+export function buildTryItHref(useCase: UseCase, platformUrl: string): string {
+  const prompt = useCase.ctaPrompt ?? useCase.promptVariants[0]?.prompt ?? "";
+  const connector = useCase.connectors
+    .map((c) => {
+      return c.id;
+    })
+    .join(",");
+  const qs = new URLSearchParams();
+  if (prompt) qs.set("prompt", prompt);
+  if (connector) qs.set("connector", connector);
+  const query = qs.toString();
+  return query ? `${platformUrl}/?${query}` : platformUrl;
 }
